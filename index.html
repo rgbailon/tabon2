@@ -185,7 +185,7 @@
                 <!-- Mobile Expand Toggle -->
                 <button onclick="toggleChannelList()" class="expand-toggle w-full p-3 flex items-center justify-between bg-black/30 border-b border-white/10 lg:hidden">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <div class="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                             </svg>
@@ -325,16 +325,24 @@
             
             <div class="p-4 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
                 <!-- Tabs -->
-                <div class="flex gap-2 border-b border-white/10 pb-3">
-                    <button onclick="switchTab('url')" id="tabUrl" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium transition-all">URL</button>
+                <div class="flex gap-2 border-b border-white/10 pb-3 flex-wrap">
+                    <button onclick="switchTab('stream')" id="tabStream" class="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium transition-all">Stream URL</button>
+                    <button onclick="switchTab('url')" id="tabUrl" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 font-medium transition-all">Playlist URL</button>
                     <button onclick="switchTab('text')" id="tabText" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 font-medium transition-all">Paste Playlist</button>
                 </div>
 
+                <!-- Direct Stream URL Input -->
+                <div id="streamSection">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Direct M3U8 Stream URL</label>
+                    <input type="url" id="streamUrl" placeholder="https://example.com/stream.m3u8" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-indigo-500 focus:outline-none">
+                    <p class="text-xs text-gray-500 mt-2">Enter a direct .m3u8 stream URL to play immediately</p>
+                </div>
+
                 <!-- URL Input -->
-                <div id="urlSection">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">M3U/M3U8 Playlist URL</label>
+                <div id="urlSection" class="hidden">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">M3U Playlist URL</label>
                     <input type="url" id="playlistUrl" placeholder="https://example.com/playlist.m3u" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-indigo-500 focus:outline-none">
-                    <p class="text-xs text-gray-500 mt-2">Enter the URL of an M3U or M3U8 playlist file</p>
+                    <p class="text-xs text-gray-500 mt-2">Enter the URL of an M3U playlist file containing multiple channels</p>
                 </div>
 
                 <!-- Text Input -->
@@ -360,7 +368,7 @@ http://another-stream.m3u8" class="w-full px-4 py-3 bg-white/5 border border-whi
 
             <div class="p-4 border-t border-white/10 flex justify-end gap-3">
                 <button onclick="closePlaylistModal()" class="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-all">Cancel</button>
-                <button onclick="loadPlaylist()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-medium transition-all">Load Playlist</button>
+                <button onclick="loadPlaylist()" id="loadBtn" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-medium transition-all">Play Stream</button>
             </div>
         </div>
     </div>
@@ -371,7 +379,7 @@ http://another-stream.m3u8" class="w-full px-4 py-3 bg-white/5 border border-whi
         let filteredChannels = [];
         let currentChannel = null;
         let hls = null;
-        let activeTab = 'url';
+        let activeTab = 'stream';
         let channelListExpanded = false;
 
         // DOM Elements
@@ -425,14 +433,25 @@ http://another-stream.m3u8" class="w-full px-4 py-3 bg-white/5 border border-whi
 
         function switchTab(tab) {
             activeTab = tab;
-            document.getElementById('tabUrl').className = tab === 'url' 
-                ? 'px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium transition-all'
-                : 'px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 font-medium transition-all';
-            document.getElementById('tabText').className = tab === 'text'
-                ? 'px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium transition-all'
-                : 'px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 font-medium transition-all';
-            document.getElementById('urlSection').classList.toggle('hidden', tab !== 'url');
-            document.getElementById('textSection').classList.toggle('hidden', tab !== 'text');
+            const tabs = ['stream', 'url', 'text'];
+            tabs.forEach(t => {
+                const tabBtn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+                const section = document.getElementById(t + 'Section');
+                if (tabBtn) {
+                    tabBtn.className = tab === t 
+                        ? 'px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium transition-all'
+                        : 'px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 font-medium transition-all';
+                }
+                if (section) {
+                    section.classList.toggle('hidden', tab !== t);
+                }
+            });
+            
+            // Update button text
+            const loadBtn = document.getElementById('loadBtn');
+            if (loadBtn) {
+                loadBtn.textContent = tab === 'stream' ? 'Play Stream' : 'Load Playlist';
+            }
         }
 
         // Parse M3U Content
@@ -482,6 +501,35 @@ http://another-stream.m3u8" class="w-full px-4 py-3 bg-white/5 border border-whi
         async function loadPlaylist() {
             let content = '';
             
+            // Handle direct stream URL
+            if (activeTab === 'stream') {
+                const url = document.getElementById('streamUrl').value.trim();
+                if (!url) {
+                    alert('Please enter a stream URL');
+                    return;
+                }
+                
+                // Create a single channel from the stream URL
+                const streamName = url.split('/').pop().replace('.m3u8', '') || 'Stream';
+                channels = [{
+                    name: streamName,
+                    url: url,
+                    group: 'Direct Stream',
+                    logo: null
+                }];
+                
+                // Update groups filter
+                groupFilter.innerHTML = '<option value="">All Categories</option><option value="Direct Stream">Direct Stream</option>';
+                
+                filterChannels();
+                renderCarousel();
+                closePlaylistModal();
+                
+                // Auto-play the stream
+                playChannel(0);
+                return;
+            }
+            
             if (activeTab === 'url') {
                 const url = document.getElementById('playlistUrl').value.trim();
                 if (!url) {
@@ -504,6 +552,25 @@ http://another-stream.m3u8" class="w-full px-4 py-3 bg-white/5 border border-whi
                         return;
                     }
                 }
+                
+                // Check if it's a direct m3u8 stream (not a playlist)
+                if (!content.includes('#EXTINF') && (url.endsWith('.m3u8') || content.includes('#EXT-X-'))) {
+                    // It's a direct HLS stream, not a playlist
+                    const streamName = url.split('/').pop().replace('.m3u8', '') || 'Stream';
+                    channels = [{
+                        name: streamName,
+                        url: url,
+                        group: 'Direct Stream',
+                        logo: null
+                    }];
+                    
+                    groupFilter.innerHTML = '<option value="">All Categories</option><option value="Direct Stream">Direct Stream</option>';
+                    filterChannels();
+                    renderCarousel();
+                    closePlaylistModal();
+                    playChannel(0);
+                    return;
+                }
             } else {
                 content = document.getElementById('playlistText').value.trim();
                 if (!content) {
@@ -515,7 +582,7 @@ http://another-stream.m3u8" class="w-full px-4 py-3 bg-white/5 border border-whi
             channels = parseM3U(content);
             
             if (channels.length === 0) {
-                alert('No channels found in playlist');
+                alert('No channels found in playlist. If you\'re trying to play a direct stream, use the "Stream URL" tab.');
                 return;
             }
 
