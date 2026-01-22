@@ -115,6 +115,42 @@
             background: linear-gradient(#4f46e5, #4f46e5);
             color: white;
         }
+        
+        /* Mobile expandable channel list */
+        @media (max-width: 1023px) {
+            .channel-sidebar {
+                transition: max-height 0.3s ease-in-out;
+                max-height: 60px;
+                overflow: hidden;
+            }
+            .channel-sidebar.expanded {
+                max-height: 70vh;
+            }
+            .channel-sidebar.expanded .channel-content {
+                opacity: 1;
+                pointer-events: all;
+            }
+            .channel-content {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s ease-in-out;
+            }
+            .channel-sidebar.expanded .channel-content {
+                opacity: 1;
+            }
+        }
+        @media (min-width: 1024px) {
+            .channel-sidebar {
+                max-height: none !important;
+            }
+            .channel-content {
+                opacity: 1 !important;
+                pointer-events: all !important;
+            }
+            .expand-toggle {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-white">
@@ -145,27 +181,47 @@
         <!-- Main Content -->
         <div class="flex-1 flex flex-col-reverse lg:flex-row overflow-hidden">
             <!-- Channel Sidebar -->
-            <aside id="channelSidebar" class="w-full lg:w-80 bg-black/20 border-r border-white/10 flex flex-col overflow-hidden min-h-0 max-h-[40vh] lg:max-h-none">
-                <!-- Search & Filter -->
-                <div class="p-3 border-b border-white/10 space-y-2">
-                    <div class="relative">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <input type="text" id="searchInput" placeholder="Search channels..." oninput="filterChannels()" class="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-indigo-500 focus:outline-none text-sm">
+            <aside id="channelSidebar" class="channel-sidebar w-full lg:w-80 bg-black/20 border-r border-white/10 flex flex-col overflow-hidden min-h-0 lg:max-h-none">
+                <!-- Mobile Expand Toggle -->
+                <button onclick="toggleChannelList()" class="expand-toggle w-full p-3 flex items-center justify-between bg-black/30 border-b border-white/10 lg:hidden">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                            </svg>
+                        </div>
+                        <div class="text-left">
+                            <p class="font-medium text-sm">Channel List</p>
+                            <p class="text-xs text-gray-400"><span id="channelCountMobile">0</span> channels</p>
+                        </div>
                     </div>
-                    <select id="groupFilter" onchange="filterChannels()" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-indigo-500 focus:outline-none text-sm">
-                        <option value="">All Categories</option>
-                    </select>
-                </div>
+                    <svg id="expandIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                
+                <!-- Channel Content (collapsible on mobile) -->
+                <div class="channel-content flex flex-col flex-1 overflow-hidden">
+                    <!-- Search & Filter -->
+                    <div class="p-3 border-b border-white/10 space-y-2">
+                        <div class="relative">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <input type="text" id="searchInput" placeholder="Search channels..." oninput="filterChannels()" class="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-indigo-500 focus:outline-none text-sm">
+                        </div>
+                        <select id="groupFilter" onchange="filterChannels()" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-indigo-500 focus:outline-none text-sm">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
 
-                <!-- Channel Count -->
-                <div class="px-3 py-2 text-xs text-gray-400 border-b border-white/10">
-                    <span id="channelCount">0</span> channels
-                </div>
+                    <!-- Channel Count -->
+                    <div class="px-3 py-2 text-xs text-gray-400 border-b border-white/10 hidden lg:block">
+                        <span id="channelCount">0</span> channels
+                    </div>
 
-                <!-- Channel List -->
-                <div id="channelList" class="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-1">
+                    <!-- Channel List -->
+                    <div id="channelList" class="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-1">
                     <div class="text-center py-12 text-gray-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -173,6 +229,7 @@
                         <p>No channels loaded</p>
                         <p class="text-sm mt-1">Click "Load Playlist" to add channels</p>
                     </div>
+                </div>
                 </div>
             </aside>
 
@@ -315,6 +372,7 @@ http://another-stream.m3u8" class="w-full px-4 py-3 bg-white/5 border border-whi
         let currentChannel = null;
         let hls = null;
         let activeTab = 'url';
+        let channelListExpanded = false;
 
         // DOM Elements
         const video = document.getElementById('videoPlayer');
@@ -330,6 +388,31 @@ http://another-stream.m3u8" class="w-full px-4 py-3 bg-white/5 border border-whi
         const statusText = document.getElementById('statusText');
         const errorMsg = document.getElementById('errorMsg');
         const errorText = document.getElementById('errorText');
+
+        // Channel List Toggle (Mobile)
+        function toggleChannelList() {
+            const sidebar = document.getElementById('channelSidebar');
+            const expandIcon = document.getElementById('expandIcon');
+            channelListExpanded = !channelListExpanded;
+            
+            if (channelListExpanded) {
+                sidebar.classList.add('expanded');
+                expandIcon.style.transform = 'rotate(180deg)';
+            } else {
+                sidebar.classList.remove('expanded');
+                expandIcon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function collapseChannelList() {
+            const sidebar = document.getElementById('channelSidebar');
+            const expandIcon = document.getElementById('expandIcon');
+            channelListExpanded = false;
+            sidebar.classList.remove('expanded');
+            if (expandIcon) {
+                expandIcon.style.transform = 'rotate(0deg)';
+            }
+        }
 
         // Modal Functions
         function openPlaylistModal() {
@@ -486,6 +569,7 @@ https://cph-msl.akamaized.net/hls/live/2000341/test/master.m3u8`;
         // Render Channel List
         function renderChannelList() {
             channelCount.textContent = filteredChannels.length;
+            document.getElementById('channelCountMobile').textContent = filteredChannels.length;
 
             if (filteredChannels.length === 0) {
                 channelList.innerHTML = `
@@ -526,6 +610,9 @@ https://cph-msl.akamaized.net/hls/live/2000341/test/master.m3u8`;
             currentChannel = index;
             hideError();
             updateStatus('loading', 'Loading...');
+            
+            // Collapse channel list on mobile when playing
+            collapseChannelList();
             
             // Update now playing
             nowPlaying.classList.remove('hidden');
